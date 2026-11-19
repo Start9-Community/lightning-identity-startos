@@ -1,0 +1,22 @@
+{
+  "name": "lightning-identity-startos",
+  "version": "0.1.0",
+  "description": "Lightning Addresses, Nostr Wallet Connect and NIP-05 for an LND node on StartOS",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@start9labs/start-sdk": "4.1.0",
+    "lnd-startos": "github:Start9Labs/lnd-startos#next"
+  },
+  "overrides": {
+    "@start9labs/start-sdk": "$@start9labs/start-sdk",
+    "bitcoin-core-startos": "github:Start9Labs/bitcoin-core-startos#next/31.x"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  }
+}

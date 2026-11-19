@@ -1,0 +1,8 @@
+node_modules/
+javascript/
+*.s9pk
+service/.sandbox/go.sum
+service/.sandbox/third_party/
+service/bin/
+.DS_Store
+_to_delete/

@@ -1,0 +1,75 @@
+{{template "head" .}}
+<p class="back"><a href="/">← Dashboard</a></p>
+<div class="card">
+<h1>{{.Identity.Name}} <span class="mut">· {{.Address}}</span></h1>
+<table class="kv">
+<tr><th>Lightning Address</th><td class="mono">{{.Address}}</td></tr>
+<tr><th>NIP-05</th><td>{{if .Identity.NIP05Enabled}}<span class="ok">{{.Address}}</span> → <span class="mono">{{npub .Identity.UserPubkey}}</span>{{else}}<span class="mut">off</span>{{end}}</td></tr>
+<tr><th>Zap signing key</th><td class="mono">{{npub .Identity.ZapPubkey}}</td></tr>
+<tr><th>Wallet service key</th><td class="mono">{{npub .Identity.NWCPubkey}}</td></tr>
+<tr><th>LNURL document</th><td class="mono">{{.Config.BaseURL}}/.well-known/lnurlp/{{.Identity.Name}}</td></tr>
+</table>
+<p></p>
+{{template "confirm" dict "Action" (print "/identities/" .Identity.ID "/rotate-zap") "Label" "Rotate zap key" "Ask" "Future zap receipts are signed by a new key. Receipts already published keep the old one." "Yes" "Yes, rotate the zap key"}}
+{{template "confirm" dict "Action" (print "/identities/" .Identity.ID "/rotate-nwc") "Label" "Rotate wallet key" "Ask" "Every Nostr Wallet Connect connection of this identity is revoked and each app must be connected again." "Yes" "Yes, rotate and revoke all connections"}}
+{{template "confirm" dict "Action" (print "/identities/" .Identity.ID "/delete") "Label" "Delete identity" "Ask" "The address stops resolving, its NIP-05 name is withdrawn and its connections are revoked. This cannot be undone." "Yes" "Yes, delete this identity" "Danger" true}}
+</div>
+
+<div class="card"><h2>Balance</h2>
+<p class="big">{{if lt .Balance.Available 0}}<span class="bad">{{msat .Balance.Available}}</span>{{else}}{{msat .Balance.Available}}{{end}}</p>
+<table>
+<tr><th>Received</th><td>{{msat .Balance.Received}}</td><th>Sent (incl. fees)</th><td>{{msat .Balance.Sent}}</td></tr>
+<tr><th>In flight</th><td>{{msat .Balance.InFlight}}</td><th>Adjustments</th><td>{{smsat .Balance.Adjusted}}</td></tr>
+</table>
+<p class="mut">This identity is its own wallet: apps see this balance, and a payment it requests must fit inside it. Credits and debits here change the number only — nothing moves on the node, so the sum of all identities can exceed what the node can actually send.</p>
+<form method="post" action="/identities/{{.Identity.ID}}/adjust">
+<div class="row"><div>
+<label for="direction">Adjustment</label>
+<select id="direction" name="direction"><option value="credit">credit (add)</option><option value="debit">debit (remove)</option></select>
+<label for="amount_sat">Amount (sats)</label><input type="number" id="amount_sat" name="amount_sat" min="1" required>
+</div><div>
+<label for="note">Note</label><input type="text" id="note" name="note" maxlength="200" placeholder="opening balance">
+</div></div>
+<p><button class="ghost" type="submit">Apply adjustment</button></p>
+</form>
+{{if .Adjustments}}<table><tr><th>When</th><th>Amount</th><th>Note</th></tr>
+{{range .Adjustments}}<tr><td>{{ago .CreatedAt}}</td><td>{{smsat .AmountMsat}}</td><td>{{.Note}}</td></tr>{{end}}</table>{{end}}
+</div>
+
+<div class="card"><h2>Settings</h2>{{template "identity_fields" .}}</div>
+
+<div class="card"><h2>Nostr Wallet Connect</h2>
+{{if .Connections}}<table><tr><th>Label</th><th>Client</th><th>Methods</th><th>Notify</th><th>Budget</th><th>Expires</th><th>Last used</th><th></th></tr>
+{{range .Connections}}<tr{{if .RevokedAt}} class="mut"{{end}}><td>{{.Label}}{{if .RevokedAt}} (revoked){{end}}</td><td class="mono">{{short .ClientPubkey}}</td><td class="mono">{{join .Methods " "}}</td><td>{{if .Notify}}yes{{else}}no{{end}}</td><td>{{if .BudgetMsat}}{{msat .BudgetMsat}}/{{.BudgetPeriod}}{{else}}—{{end}}</td><td>{{if .ExpiresAt}}{{.ExpiresAt.Format "2006-01-02"}}{{else}}never{{end}}</td><td>{{if .LastUsedAt}}{{ago .LastUsedAt}}{{else}}—{{end}}</td>
+<td>{{if not .RevokedAt}}{{template "confirm" dict "Action" (print "/connections/" .ID "/revoke") "Label" "Revoke" "Ask" "The app using this connection can no longer reach the wallet. This cannot be undone." "Yes" "Yes, revoke"}}{{end}}</td></tr>{{end}}</table>{{else}}<p class="mut">No connections yet.</p>{{end}}
+<h3>New connection</h3>
+<form method="post" action="/identities/{{.Identity.ID}}/connections">
+<div class="row"><div>
+<label for="label">Label (the app that will use it)</label><input type="text" id="label" name="label" maxlength="64" placeholder="Damus on my phone">
+<label for="expires_days">Expires after (days, 0 = never)</label><input type="number" id="expires_days" name="expires_days" value="0" min="0">
+</div><div>
+<label>Permissions</label>
+{{range .Methods}}<label class="chk"><input type="checkbox" name="m_{{.}}" checked> {{.}}</label>{{end}}
+<label class="chk"><input type="checkbox" name="m_pay_invoice"> pay_invoice{{if not .Sending}} <span class="mut">(refused until sending is authorized in StartOS)</span>{{end}}</label>
+<label class="chk"><input type="checkbox" name="notify" checked> payment notifications</label>
+<label for="budget_sat">Budget for pay_invoice (sats, 0 = none)</label><input type="number" id="budget_sat" name="budget_sat" value="0" min="0">
+<label for="budget_period">Budget period</label>
+<select id="budget_period" name="budget_period"><option value="monthly">monthly</option><option value="weekly">weekly</option><option value="daily">daily</option><option value="yearly">yearly</option><option value="never">lifetime</option></select>
+<label for="max_pay_sat">Max per payment (sats, 0 = guard cap only)</label><input type="number" id="max_pay_sat" name="max_pay_sat" value="0" min="0">
+</div></div>
+<p><button type="submit">Create connection</button></p>
+</form>
+</div>
+
+<div class="card"><h2>Recent payments</h2>
+{{if .Payments}}<table><tr><th>Created</th><th>Amount</th><th>Fee</th><th>State</th><th>Description</th></tr>
+{{range .Payments}}<tr><td>{{ago .CreatedAt}}</td><td>{{msat .AmountMsat}}</td><td>{{msat .FeeMsat}}</td><td>{{if eq .State "settled"}}<span class="ok">settled</span>{{if .Internal}} <span class="mut">(internal)</span>{{end}}{{else if eq .State "failed"}}<span class="bad">failed</span> <span class="mut">{{.FailureReason}}</span>{{else}}{{.State}}{{end}}</td><td>{{.Description}}</td></tr>{{end}}</table>
+{{else}}<p class="mut">Nothing yet.</p>{{end}}
+</div>
+
+<div class="card"><h2>Recent invoices</h2>
+{{if .Invoices}}<table><tr><th>Created</th><th>Amount</th><th>Source</th><th>State</th><th>Comment</th><th>Receipt</th></tr>
+{{range .Invoices}}<tr><td>{{ago .CreatedAt}}</td><td>{{msat .AmountMsat}}</td><td>{{.Source}}</td><td>{{if eq .State "settled"}}<span class="ok">settled</span>{{else}}{{.State}}{{end}}</td><td>{{.Comment}}</td><td>{{if .ReceiptID}}{{len .ReceiptRelays}} relays{{else if .ZapRequest}}pending{{else}}—{{end}}</td></tr>{{end}}</table>
+{{else}}<p class="mut">Nothing yet.</p>{{end}}
+</div>
+{{template "foot" .}}

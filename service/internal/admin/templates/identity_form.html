@@ -1,0 +1,38 @@
+{{template "head" .}}
+<p class="back">{{if .New}}<a href="/">← Dashboard</a>{{else}}<a href="/identities/{{.Identity.ID}}">← {{.Identity.Name}}</a>{{end}}</p>
+<div class="card">
+<h1>{{if .New}}New identity{{else}}Edit {{.Identity.Name}}{{end}}</h1>
+{{if .Error}}<p class="bad">{{.Error}}</p>{{end}}
+{{template "identity_fields" .}}
+</div>
+{{template "foot" .}}
+
+{{define "identity_fields"}}
+<form method="post" action="{{if .New}}/identities{{else}}/identities/{{.Identity.ID}}/update{{end}}">
+<div class="row">
+<div>
+<label for="name">Name (the part before @; use <code>_</code> for the bare domain NIP-05)</label>
+<input type="text" id="name" name="name" value="{{.Identity.Name}}" required pattern="[a-z0-9._-]{1,64}" {{if not .New}}readonly{{end}}>
+<label for="display_name">Display name (shown to payers)</label>
+<input type="text" id="display_name" name="display_name" value="{{.Identity.DisplayName}}" maxlength="64">
+<label for="user_pubkey">Your Nostr pubkey for NIP-05 (npub or hex; optional)</label>
+<input type="text" id="user_pubkey" name="user_pubkey" value="{{.Identity.UserPubkey}}" placeholder="npub1…">
+<label class="chk"><input type="checkbox" name="nip05" {{if .Identity.NIP05Enabled}}checked{{end}}> Serve NIP-05 for this name</label>
+{{if not .New}}<label class="chk"><input type="checkbox" name="disabled" {{if .Identity.Disabled}}checked{{end}}> Disabled (address stops resolving)</label>{{end}}
+</div>
+<div>
+<label for="min_sat">Minimum amount (sats)</label>
+<input type="number" id="min_sat" name="min_sat" value="{{div1000 .Identity.MinSendableMsat}}" min="1">
+<label for="max_sat">Maximum amount (sats)</label>
+<input type="number" id="max_sat" name="max_sat" value="{{div1000 .Identity.MaxSendableMsat}}" min="1">
+<label for="comment_allowed">Comment length allowed (0 = no comments)</label>
+<input type="number" id="comment_allowed" name="comment_allowed" value="{{.Identity.CommentAllowed}}" min="0" max="1024">
+<label for="nwc_relay">NWC relay (blank = this service's own relay)</label>
+<input type="text" id="nwc_relay" name="nwc_relay" value="{{.Identity.NWCRelay}}" placeholder="{{if .Config.RelayURL}}{{.Config.RelayURL}}{{else}}wss://<your domain>/relay{{end}}">
+<label for="relays">Extra relays for zap receipts (one per line; the zapper's relays and this service's relay are always used)</label>
+<textarea id="relays" name="relays">{{join .Identity.Relays "\n"}}</textarea>
+</div>
+</div>
+<p><button type="submit">{{if .New}}Create{{else}}Save{{end}}</button> <a class="mut" href="{{if .New}}/{{else}}/identities/{{.Identity.ID}}{{end}}">Cancel</a></p>
+</form>
+{{end}}

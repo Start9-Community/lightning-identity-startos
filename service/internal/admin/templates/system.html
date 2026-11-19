@@ -1,0 +1,44 @@
+{{template "head" .}}
+<p class="back"><a href="/">← Dashboard</a></p>
+<div class="card"><h2>Public endpoints</h2>
+{{if .Domain}}<table class="kv">
+<tr><th>Domain</th><td>{{.Domain}}</td></tr>
+<tr><th>Lightning Addresses</th><td class="mono">name@{{.Domain}}</td></tr>
+<tr><th>LNURL and NIP-05</th><td class="mono">{{.Config.BaseURL}}/.well-known/…</td></tr>
+<tr><th>Relay</th><td class="mono">{{.Config.RelayURL}}</td></tr>
+</table>
+{{else}}<p class="bad">No primary domain is set. Run <b>Set Primary Domain</b> in StartOS.</p>{{end}}
+</div>
+
+<div class="card"><h2>LND node</h2>
+{{if .NodeErr}}<p class="bad">Not reachable: {{.NodeErr}}</p>{{else}}
+<table class="kv"><tr><th>Alias</th><td>{{.Node.Alias}}</td></tr>
+<tr><th>Public key</th><td class="mono">{{.Node.IdentityPubkey}}</td></tr>
+<tr><th>Block height</th><td>{{.Node.BlockHeight}}{{if not .Node.SyncedToChain}} <span class="bad">(not synced)</span>{{end}}</td></tr>
+<tr><th>Version</th><td>{{.Node.Version}}</td></tr></table>{{end}}
+</div>
+
+<div class="card"><h2>Guard</h2>
+<p class="mut">The guard is the only process that reads LND's admin macaroon. It bakes the narrow credentials the rest of this service uses and enforces the sending caps inside LND.</p>
+{{if .GuardErr}}<p class="bad">Guard not answering: {{.GuardErr}}</p>{{else}}{{with .Sys}}
+<table class="kv">
+<tr><th>LND state</th><td>{{.LNDState}}</td></tr>
+<tr><th>Admin macaroon</th><td>{{if .AdminOK}}<span class="ok">readable</span>{{else}}<span class="bad">not readable</span>{{end}}</td></tr>
+{{if .LastError}}<tr><th>Last error</th><td class="bad">{{.LastError}}</td></tr>{{end}}
+</table>
+<h3>Receive credential</h3>
+<table class="kv">
+<tr><th>Status</th><td>{{if .Receive.Baked}}<span class="ok">baked</span>, expires {{.Receive.Expires}} <span class="mut">(renewed hourly)</span>{{else}}<span class="bad">not baked yet</span>{{end}}</td></tr>
+{{if .Receive.Methods}}<tr><th>Allows</th><td class="mono">{{range .Receive.Methods}}{{.}}<br>{{end}}</td></tr>{{end}}
+{{if .Receive.Caveats}}<tr><th>Caveats</th><td class="mono">{{range .Receive.Caveats}}{{.}}<br>{{end}}</td></tr>{{end}}
+</table>
+<h3>Spend credential</h3>
+{{if .SendingEnabled}}<table class="kv">
+<tr><th>Status</th><td>{{if .Spend.Baked}}<span class="ok">baked</span>, expires {{.Spend.Expires}} <span class="mut">(renewed hourly)</span>{{else}}<span class="bad">not baked yet</span>{{end}}</td></tr>
+<tr><th>Caps check</th><td>{{if .Middleware}}<span class="ok">registered with LND</span> <span class="mut">(LND passes every payment made with this credential through the guard before it executes)</span>{{else}}<span class="bad">not registered — LND refuses payments until it is</span>{{end}}</td></tr>
+{{if .Spend.Methods}}<tr><th>Allows</th><td class="mono">{{range .Spend.Methods}}{{.}}<br>{{end}}</td></tr>{{end}}
+{{if .Spend.Caveats}}<tr><th>Caveats</th><td class="mono">{{range .Spend.Caveats}}{{.}}<br>{{end}}</td></tr>{{end}}
+</table>{{else}}<p class="mut">None. Sending is off, so no credential that can pay exists.</p>{{end}}
+{{end}}{{end}}
+</div>
+{{template "foot" .}}

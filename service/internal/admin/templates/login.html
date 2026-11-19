@@ -1,0 +1,12 @@
+{{template "head" .}}
+<div class="card" style="max-width:420px;margin:40px auto">
+<h1>Sign in</h1>
+{{if .NoPassword}}<p class="bad">No admin password is set. Run <b>Set Admin Password</b> in StartOS, then restart the service.</p>{{else}}
+{{if .Error}}<p class="bad">{{.Error}}</p>{{end}}
+<form method="post" action="/login">
+<label for="password">Admin password (from the Set Admin Password action in StartOS)</label>
+<input type="password" id="password" name="password" autofocus autocomplete="current-password">
+<p><button type="submit">Sign in</button></p>
+</form>{{end}}
+</div>
+{{template "foot" .}}

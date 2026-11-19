@@ -1,0 +1,72 @@
+{{template "head" .}}
+{{if not .Domain}}<div class="card"><p class="bad">No primary domain is set. Run <b>Set Primary Domain</b> in StartOS; until then no Lightning Address, NIP-05 name or NWC connection can resolve.</p></div>{{end}}
+{{if .Problems}}<div class="card"><h2>Needs attention</h2>
+{{range .Problems}}<p class="warn">{{.}}</p>{{end}}
+<p class="mut">Details are on the <a href="/system">System</a> page.</p></div>{{end}}
+
+<div class="card"><div class="head"><h2>Identities</h2><a class="btn" href="/identities/new">Add identity</a></div>
+{{if .Identities}}<table><tr><th>Name</th><th>Address</th><th>Balance</th><th>NIP-05</th></tr>
+{{range .Identities}}<tr><td><a href="/identities/{{.ID}}">{{.Name}}</a>{{if .Disabled}} <span class="mut">(disabled)</span>{{end}}</td>
+<td class="mono">{{.Name}}@{{$.Domain}}</td>
+<td>{{with index $.Balances .ID}}{{if lt .Available 0}}<span class="bad">{{msat .Available}}</span>{{else}}{{msat .Available}}{{end}}{{end}}</td>
+<td>{{if .NIP05Enabled}}<span class="ok">on</span>{{else}}<span class="mut">off</span>{{end}}</td></tr>{{end}}</table>
+<p class="mut">Balances total {{msat .TotalMsat}}. They are ledger positions, not channel funds; <b>Liquidity</b> below shows what the node can actually send.</p>
+{{else}}<p class="mut">No identities yet. An identity is a name on your domain: a Lightning Address, optionally a NIP-05 name, and a wallet your Nostr apps can connect to.</p>{{end}}
+</div>
+
+<div class="card"><h2>Liquidity</h2>
+{{if .GuardErr}}<p class="mut">Unknown until the guard answers.</p>
+{{else if not .Liquidity.Known}}<p class="mut">The guard has not reported the node's channels yet.</p>
+{{else if .Liquidity.Error}}<p class="bad">Could not read the node's channels: {{.Liquidity.Error}}.</p>
+{{else if eq .Liquidity.Channels 0}}<p class="bad">The node has no open channels. Nothing can be sent or received over Lightning.</p>
+{{else}}{{with .Liquidity}}
+<div class="row">
+<div class="stat"><h3>Can send</h3><div class="big">{{msat .CanSendMsat}}</div></div>
+<div class="stat"><h3>Can receive</h3><div class="big">{{msat .CanReceiveMsat}}</div></div>
+</div>
+{{if .UnsettledMsat}}<p class="mut">{{msat .UnsettledMsat}} in pending payments.</p>{{end}}
+{{if eq .Active 0}}<p class="warn">Every channel is offline (no peer connected). Nothing can be sent or received until one reconnects.</p>
+{{else}}
+{{if eq .CanReceiveMsat 0}}<p class="warn">No room to receive. Payments to your Lightning Addresses and zaps will fail until a channel has funds on the far side.</p>{{end}}
+{{if .Offline}}<p class="warn">{{.Offline}} of {{.Channels}} channels {{if eq .Offline 1}}is{{else}}are{{end}} offline{{if .OfflineSendMsat}}; the {{msat .OfflineSendMsat}} on your side of {{if eq .Offline 1}}it{{else}}them{{end}} cannot be sent until the peer is back{{end}}.</p>{{end}}
+{{end}}
+{{if .ShortMsat}}<p class="warn">Identities hold {{msat $.TotalMsat}}, but the node can send about {{msat .CanSendMsat}}. {{msat .ShortMsat}} of those balances could not be paid out right now.</p>{{end}}
+<table><tr><th>Peer</th><th>State</th><th>Can send</th><th>Can receive</th></tr>
+{{range .List}}<tr><td>{{if .Peer}}{{.Peer}} <span class="mono mut">{{short .Pubkey}}</span>{{else}}<span class="mono">{{short .Pubkey}}</span>{{end}}{{if .Unannounced}} <span class="mut">(unannounced)</span>{{end}}</td>
+<td>{{if .Active}}<span class="ok">online</span>{{else}}<span class="bad">offline</span>{{end}}</td>
+<td>{{msat .CanSendMsat}}</td><td>{{msat .CanReceiveMsat}}</td></tr>{{end}}</table>
+{{end}}{{end}}
+</div>
+<div class="card"><h2>Sending</h2>
+{{if .GuardErr}}<p class="mut">Unknown until the guard answers.</p>{{else}}
+{{if index .Guard "sending_enabled"}}
+<p><span class="ok">Enabled.</span> Apps with the pay_invoice permission can pay from an identity's balance, within these caps.</p>
+<table>
+<tr><th>Per-payment cap</th><td>{{msat (int64 (index .Guard "max_payment_msat"))}}</td></tr>
+<tr><th>24-hour cap</th><td>{{msat (int64 (index .Guard "max_24h_msat"))}}</td></tr>
+<tr><th>Spent in the last 24 h</th><td>{{msat (int64 (index .Guard "spent_24h_msat"))}} (+ {{msat (int64 (index .Guard "reserved_msat"))}} in flight)</td></tr>
+</table>
+<form method="post" action="/sending/lower-caps"><div class="row"><div>
+<label for="max_pay_sat">Lower per-payment cap to (sats)</label><input type="number" id="max_pay_sat" name="max_pay_sat" min="0" value="{{div1000 (int64 (index .Guard "max_payment_msat"))}}">
+</div><div>
+<label for="max_24h_sat">Lower 24-hour cap to (sats)</label><input type="number" id="max_24h_sat" name="max_24h_sat" min="0" value="{{div1000 (int64 (index .Guard "max_24h_msat"))}}">
+</div></div>
+<p><button class="ghost" type="submit">Lower caps</button> <span class="mut">Raising them requires the <b>Authorize Sending</b> action in StartOS.</span></p></form>
+{{template "confirm" dict "Action" "/sending/disable" "Label" "Disable sending" "Ask" "Every NWC pay_invoice is refused until you authorize sending again in StartOS." "Yes" "Yes, disable sending" "Danger" true}}
+{{else}}<p>Off (receive-only). Run <b>Authorize Sending</b> in StartOS to enable it with the caps you choose.</p>{{end}}{{end}}
+</div>
+<div class="card"><h2>Lightning</h2>
+<form method="post" action="/settings">
+<label class="chk"><input type="checkbox" name="route_hints" {{if .Settings.RouteHints}}checked{{end}}> Route hints in invoices <span class="mut">(needed when your channels are private / unannounced; adds hop hints to every invoice)</span></label>
+<label class="chk"><input type="checkbox" name="self_pay" {{if .Settings.SelfPay}}checked{{end}}> Self-pay <span class="mut">(an app paying one of this node's own invoices is settled in the ledger between identities; Lightning cannot route a node to itself)</span></label>
+<label for="expiry_minutes">Invoice expiry (minutes)</label><input type="number" id="expiry_minutes" name="expiry_minutes" min="1" max="10080" value="{{div60 .Settings.InvoiceExpirySeconds}}">
+<div class="row"><div>
+<label for="fee_percent">Routing fee limit (% of the amount)</label><input type="number" id="fee_percent" name="fee_percent" min="0" max="10" step="0.01" value="{{pct .Settings.FeeLimitPPM}}">
+</div><div>
+<label for="fee_min_sat">…but never less than (sats)</label><input type="number" id="fee_min_sat" name="fee_min_sat" min="0" max="1000" value="{{div1000 .Settings.FeeLimitMinMsat}}">
+</div></div>
+<p class="mut">The most an outgoing payment may cost to route. It is a ceiling, not a charge: the real fee is usually a few sats, and only that is deducted. The minimum is what small payments and zaps depend on — most nodes charge about a sat per hop whatever the amount — so set too low, they fail with "no route". The limit is set aside from the identity's balance while a payment is in flight, and it counts toward the per-payment cap.
+<p><button type="submit">Save</button></p>
+</form>
+</div>
+{{template "foot" .}}

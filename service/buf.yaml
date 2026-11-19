@@ -1,0 +1,9 @@
+version: v2
+modules:
+  - path: proto/lnrpc
+lint:
+  ignore:
+    - proto/lnrpc
+breaking:
+  use:
+    - FILE

@@ -1,0 +1,16 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    # The generated stubs are ours, in our module. The prefix ends in /lndrpc
+    # because the buf module is rooted at proto/lnrpc: lightning.proto keeps
+    # package lnrpc at the root, routerrpc/router.proto lands beside it.
+    - file_option: go_package_prefix
+      value: github.com/lundog/lightning-identity-startos/service/internal/lndrpc
+plugins:
+  - local: protoc-gen-go
+    out: internal/lndrpc
+    opt: paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: internal/lndrpc
+    opt: paths=source_relative

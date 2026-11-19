@@ -1,0 +1,56 @@
+{{define "head"}}<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lightning Identity</title>
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<style>
+:root{--bg:#0f1115;--card:#171a21;--line:#2a2f3a;--fg:#e6e8ee;--mut:#9aa3b2;--acc:#f7931a;--bad:#ff6b6b;--ok:#4cd27a}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding:12px 20px;border-bottom:1px solid var(--line)}
+header a{color:var(--fg);text-decoration:none;font-weight:600}header a.brand{display:inline-flex;align-items:center;gap:10px}header a img{display:block;border-radius:7px}header form{margin:0}
+nav{display:flex;align-items:center;gap:4px}nav a{padding:6px 10px;border-radius:7px;font-weight:500;color:var(--mut)}nav a.on{color:var(--fg);background:var(--card)}nav form{margin-left:8px}
+main{max-width:980px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 16px;overflow-x:auto}
+h1,h2,h3{margin:0 0 10px;font-weight:600}h1{font-size:20px}h2{font-size:17px}h3{font-size:15px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}.row+table{margin-top:12px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut);font-weight:500}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
+.mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}.big{font-size:1.8em;font-weight:600;margin:.2em 0}
+a{color:var(--acc)}button,.btn{background:var(--acc);color:#111;border:0;border-radius:7px;padding:7px 12px;font-weight:600;cursor:pointer;white-space:nowrap}
+button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}button.danger{background:var(--bad);color:#111}
+label{display:block;margin:10px 0 4px;color:var(--mut);font-size:13px}input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--line);background:#0c0e12;color:var(--fg);font:inherit}
+textarea{min-height:70px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:700px){.row{grid-template-columns:1fr}}
+.flash{border-left:4px solid var(--ok)}.flash.err{border-left-color:var(--bad)}.flash .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.flash .top a{white-space:nowrap}
+.secret{background:#0c0e12;border:1px dashed var(--acc);border-radius:8px;padding:10px;margin:8px 0 12px}.secret .mono{user-select:all;-webkit-user-select:all}
+.back{margin:0 0 12px}.back a{color:var(--mut);text-decoration:none}.back a:hover{color:var(--fg)}
+a.btn{display:inline-block;text-decoration:none}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 10px}.head h2{margin:0}
+details.confirm{display:inline-block;vertical-align:top;margin:0 6px 6px 0}details.confirm>summary{list-style:none;display:inline-block;border:1px solid var(--line);border-radius:7px;padding:7px 12px;font-weight:600;cursor:pointer;white-space:nowrap}
+details.confirm>summary::-webkit-details-marker{display:none}details.confirm.danger>summary{color:var(--bad);border-color:var(--bad)}
+details.confirm[open]{display:block;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0}details.confirm[open]>summary{border:0;padding:0;margin:0 0 6px}
+details.confirm[open]>summary::after{content:" · cancel";color:var(--mut);font-weight:400}details.confirm p{margin:0 0 10px}table+h3{margin-top:18px}table.kv th{width:210px}
+@media(max-width:700px){table.kv th{width:auto}.chk{flex-wrap:wrap}.chk .mut{flex-basis:100%;margin-left:22px}}
+.stat{margin:0 0 6px}.stat .big{margin:0}.warn{border-left:3px solid var(--bad);padding:6px 10px;margin:8px 0;background:#1d1416;border-radius:0 6px 6px 0}
+.inline{display:inline}.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;color:var(--fg)}
+</style></head><body>
+<header><a class="brand" href="/"><img src="/icon.svg" width="30" height="30" alt=""><span>Lightning Identity{{if .Domain}} <span class="mut">· {{.Domain}}</span>{{end}}</span></a>
+{{if not .HideLogout}}<nav><a href="/"{{if .OnDashboard}} class="on"{{end}}>Dashboard</a><a href="/system"{{if .OnSystem}} class="on"{{end}}>System</a><form method="post" action="/logout"><button class="ghost" type="submit">Log out</button></form></nav>{{end}}</header>
+<main>
+{{/* A result is shown once. The link reloads this page, where it is gone:
+     the page runs no script, so dismissing is a navigation. */}}
+{{if .Flash}}<div class="card flash{{if .Flash.Error}} err{{end}}">
+{{if .Flash.Secret}}<h2>{{.Flash.Title}}</h2><p>{{.Flash.Message}}</p>
+<div class="secret"><div class="mono">{{.Flash.Secret}}</div>{{if .Flash.QR}}<p><img src="{{.Flash.QR}}" alt="QR code" width="256" height="256"></p>{{end}}</div>
+<p><a class="btn" href="">Done</a> <span class="mut">This hides it for good. If the app did not get it, revoke the connection and create another.</span></p>
+{{else}}<div class="top"><h2>{{.Flash.Title}}</h2><a class="mut" href="">Dismiss</a></div><p>{{.Flash.Message}}</p>{{end}}
+</div>{{end}}
+{{end}}
+
+{{/* confirm: a destructive button that asks first, without script. The
+     page's content security policy allows none, so an onsubmit="confirm()"
+     never runs and the form would simply submit. dict keys: Action (form
+     target), Label, Ask (what will happen), Yes (the confirming button),
+     Danger. */}}
+{{define "confirm"}}<details class="confirm{{if .Danger}} danger{{end}}"><summary>{{.Label}}</summary>
+<p>{{.Ask}}</p>
+<form class="inline" method="post" action="{{.Action}}"><button class="{{if .Danger}}danger{{else}}ghost{{end}}" type="submit">{{.Yes}}</button></form>
+</details>{{end}}
+{{define "foot"}}</main></body></html>{{end}}
