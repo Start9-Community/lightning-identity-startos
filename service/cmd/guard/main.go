@@ -64,7 +64,7 @@ func main() {
 		AdminMacaroonHex: adminHex,
 		CredentialsDir:   httpx.Env("CREDENTIALS_DIR", "/credentials"),
 		StateDir:         httpx.Env("GUARD_DIR", "/guard"),
-		SocketPath:       httpx.Env("GUARD_SOCKET", "/run/lightning-identity/guard.sock"),
+		SocketPath:       httpx.Env("GUARD_SOCKET", "/run/lightning-identity/guard/guard.sock"),
 		AllowedUIDs:      httpx.EnvUIDs("GUARD_ALLOWED_UIDS"),
 		Log:              log,
 	}

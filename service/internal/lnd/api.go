@@ -423,7 +423,15 @@ func (c *Client) SendPaymentV2(ctx context.Context, req SendPaymentRequest) (*Pa
 	if res.StatusCode/100 != 2 {
 		raw, _ := io.ReadAll(io.LimitReader(res.Body, 64<<10))
 		e := &Error{Status: res.StatusCode}
-		_ = json.Unmarshal(raw, e)
+		// A streaming endpoint wraps its error as {"error": {...}}.
+		var env struct {
+			Error *Error `json:"error"`
+		}
+		if json.Unmarshal(raw, &env) == nil && env.Error != nil {
+			e.Code, e.Message = env.Error.Code, env.Error.Message
+		} else {
+			_ = json.Unmarshal(raw, e)
+		}
 		if e.Message == "" {
 			e.Message = strings.TrimSpace(string(raw))
 		}

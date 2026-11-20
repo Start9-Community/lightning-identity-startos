@@ -10,13 +10,6 @@
     "lnd-startos": "github:Start9Labs/lnd-startos#next"
   },
   "overrides": {
-    "@start9labs/start-sdk": "$@start9labs/start-sdk",
-    "bitcoin-core-startos": "github:Start9Labs/bitcoin-core-startos#next/31.x"
-  },
-  "prettier": {
-    "trailingComma": "all",
-    "tabWidth": 2,
-    "semi": false,
-    "singleQuote": true
+    "@start9labs/start-sdk": "$@start9labs/start-sdk"
   }
 }
