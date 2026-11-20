@@ -21,8 +21,10 @@ export const uids = { edge: 1001, core: 1002, guard: 1003 } as const
 /** Where the binaries expect things inside their subcontainers. */
 export const paths = {
   runDir: '/run/lightning-identity',
-  guardSocket: '/run/lightning-identity/guard.sock',
-  edgeSocket: '/run/lightning-identity/edge-core.sock',
+  guardRunDir: '/run/lightning-identity/guard',
+  coreRunDir: '/run/lightning-identity/core',
+  guardSocket: '/run/lightning-identity/guard/guard.sock',
+  edgeSocket: '/run/lightning-identity/core/edge-core.sock',
 } as const
 
 /**

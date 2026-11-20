@@ -7,8 +7,9 @@ export const manifest = setupManifest({
   id: 'lightning-identity',
   title: 'Lightning Identity',
   license: 'MIT',
-  packageRepo: 'https://github.com/lundog/lightning-identity-startos',
-  upstreamRepo: 'https://github.com/lundog/lightning-identity-startos',
+  packageRepo: 'https://github.com/Start9-Community/lightning-identity-startos',
+  upstreamRepo:
+    'https://github.com/Start9-Community/lightning-identity-startos',
   marketingUrl: 'https://github.com/lundog/lightning-identity-startos',
   donationUrl: null,
   description: { short, long },

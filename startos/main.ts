@@ -69,7 +69,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     sdk.Mounts.of()
       .mountVolume(vol('edge', '/edge', false))
       .mountVolume(vol('identities', '/identities', true))
-      .mountVolume(vol('run', paths.runDir, false))
+      .mountVolume(vol('run/core', paths.coreRunDir, false))
       .mountVolume(vol('site', '/site', true)),
     'edge',
   )
@@ -89,7 +89,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     sdk.Mounts.of()
       .mountVolume(vol('credentials', '/credentials', false))
       .mountVolume(vol('guard', '/guard', false))
-      .mountVolume(vol('run', paths.runDir, false))
+      .mountVolume(vol('run/guard', paths.guardRunDir, false))
       // LND's `public` volume, `admin` tier: admin.macaroon and a copy of
       // tls.cert, and nothing else. LND's `main` volume — store.json (wallet
       // password + cipher seed), tls.key, wallet.db — is not mounted
@@ -106,9 +106,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
   )
 
   // One root-run oneshot owns the layout: StartOS mounts volumes root-owned,
-  // and each process must own exactly its slice. `run` is sticky and
-  // world-writable so core and guard can each create their socket; the
-  // sockets themselves check the peer uid.
+  // and each process must own exactly its slice. Each socket's folder is
+  // writable by its server alone; the sockets themselves check the peer uid.
   const prepareSub = sdk.SubContainer.of(
     effects,
     { imageId },

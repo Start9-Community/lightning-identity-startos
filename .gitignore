@@ -1,8 +1,11 @@
-node_modules/
-javascript/
 *.s9pk
+startos/*.js
+node_modules/
+.DS_Store
+.vscode/
+docker-images
+javascript
+ncc-cache
+service/bin/
 service/.sandbox/go.sum
 service/.sandbox/third_party/
-service/bin/
-.DS_Store
-_to_delete/
