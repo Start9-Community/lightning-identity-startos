@@ -32,10 +32,3 @@ There is no upstream: `service/` in this repository is the application and
   Go 1.24); bump both together.
 - The vendored LND protos in `service/proto/lnrpc` (see its README): replace
   from the LND tag you support and run `make proto` in `service/`.
-
-## The sandbox modfile
-
-`service/.sandbox/go.mod` exists for a development environment that reaches
-GitHub but not the Go module proxy; it replaces non-GitHub modules with
-mirrors or empty stubs. Build with `go build -modfile=.sandbox/go.mod ./...`
-there, never anywhere else, and never let its replaces into `go.mod`.

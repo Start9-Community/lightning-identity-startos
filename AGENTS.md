@@ -1,15 +1,12 @@
 # AGENTS.md
 
-This is a StartOS service-package repository — it builds a `.s9pk` for StartOS —
-and, unlike most, it also contains the service itself (`service/`, Go).
+This is a StartOS service-package repository — it builds a `.s9pk` for StartOS.
 
 Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-workspace`,
-which provides the packaging guide one level up (or <https://docs.start9.com/packaging>).
-Start packaging tasks at the recipe index, <https://docs.start9.com/packaging/recipes.html>.
+which provides the packaging guide and agent context one level up. If you're reading this in a
+bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Keep `README.md` (technical reference) and `instructions.md` (end-user docs) in sync with
-your changes; `docs/design.md` is the rationale and is updated when a decision changes, not
-for every edit.
+`service/` holds the application itself (Go); there is no separate upstream. `docs/design.md` is the rationale, updated when a decision changes.
 
 ## This repo
 
@@ -23,6 +20,9 @@ for every edit.
   one is a security review, not a refactor.
 - The uids in `startos/utils.ts`, the users in `Dockerfile` and `assets/prepare-volume.sh`
   must agree. Sockets are world-connectable on purpose; the uid check on accept is the auth.
+  Each lives in a folder only its server's uid can write (`run/guard/`, `run/core/`) and is
+  mounted only where it is dialled; never make one writable by another uid, or that process
+  can bind the path first and impersonate the server to its clients.
 - `go build` in the sandbox uses `-modfile=.sandbox/go.mod`; the real `go.mod` carries no
   replaces. Run `go mod tidy` on a machine with module access before a release.
 - `service/internal/admin/static/icon.svg` is a copy of the root `icon.svg` (the Admin UI

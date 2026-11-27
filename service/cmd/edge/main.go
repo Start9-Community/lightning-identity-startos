@@ -30,7 +30,7 @@ func main() {
 
 	listen := httpx.Env("EDGE_LISTEN", ":8080")
 	identitiesDir := httpx.Env("IDENTITIES_DIR", "/identities")
-	coreSock := httpx.Env("CORE_SOCKET", "/run/lightning-identity/edge-core.sock")
+	coreSock := httpx.Env("CORE_SOCKET", "/run/lightning-identity/core/edge-core.sock")
 	dataDir := httpx.Env("EDGE_DATA", "/edge")
 	siteDir := httpx.Env("SITE_DIR", "")
 

@@ -73,3 +73,23 @@ func TestInvoiceAndHashCannotSteerTheRequest(t *testing.T) {
 		t.Fatalf("requests: %v", seen)
 	}
 }
+
+// LND's REST gateway refuses a streaming call with the error wrapped in an
+// envelope; the message must come out bare, as the guard wrote it.
+func TestSendPaymentRefusalMessage(t *testing.T) {
+	const msg = "guard: payment of 15000 msat (with fee limit) exceeds the per-payment cap of 10000 msat"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"error":{"code":2,"message":"` + msg + `","details":[]}}`))
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	_, err := c.SendPaymentV2(context.Background(), SendPaymentRequest{})
+	e, ok := err.(*Error)
+	if !ok {
+		t.Fatalf("err = %T %v, want *Error", err, err)
+	}
+	if e.Message != msg || e.Code != 2 {
+		t.Fatalf("got code %d message %q", e.Code, e.Message)
+	}
+}

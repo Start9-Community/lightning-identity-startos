@@ -23,7 +23,7 @@ FROM alpine:3.22
 RUN adduser -D -H -u 1001 -s /sbin/nologin edge \
  && adduser -D -H -u 1002 -s /sbin/nologin core \
  && adduser -D -H -u 1003 -s /sbin/nologin guard \
- && mkdir -p /etc/lightning-identity /run/lightning-identity /identities /credentials /guard /core /edge /site /upload /lnd/admin
+ && mkdir -p /etc/lightning-identity /run/lightning-identity/guard /run/lightning-identity/core /identities /credentials /guard /core /edge /site /upload /lnd/admin
 COPY --from=build /out/edge /out/core /out/guard /usr/local/bin/
 COPY assets/prepare-volume.sh /usr/local/bin/prepare-volume.sh
 RUN chmod 0755 /usr/local/bin/edge /usr/local/bin/core /usr/local/bin/guard /usr/local/bin/prepare-volume.sh

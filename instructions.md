@@ -1,5 +1,12 @@
 # Lightning Identity
 
+## Documentation
+
+- [LUD-16 Lightning Address](https://github.com/lnurl/luds/blob/luds/16.md) — the address format wallets resolve
+- [NIP-05 Nostr verification](https://github.com/nostr-protocol/nips/blob/master/05.md) — how `name@domain` is verified in Nostr clients
+- [NIP-47 Nostr Wallet Connect](https://github.com/nostr-protocol/nips/blob/master/47.md) — the protocol your Nostr apps use to talk to this wallet service
+- [NIP-57 Lightning Zaps](https://github.com/nostr-protocol/nips/blob/master/57.md) — zap requests and receipts
+
 ## What it gives you on StartOS
 
 Two interfaces. The **Public** interface is the one you put a domain on: it answers Lightning Address lookups, NIP-05 lookups and hosts a small Nostr relay, and it holds no keys or credentials. The **Admin UI** is where you manage identities; keep it on your LAN or Tor.
@@ -10,9 +17,9 @@ Everything is paid into your own LND. Sending from it over Nostr Wallet Connect 
 
 Install LND first and unlock it. Then:
 
-1. Run **Set Admin Password** from the Actions list and copy the password it shows. It is not shown again; run the action again to get a new one.
+1. Complete the **Set Admin Password** task and copy the password it shows. It is not shown again; run **Set Admin Password** again from the Actions list to get a new one.
 2. Open the **Public** interface, add a **public domain** (for example `yourdomain.com`, or a subdomain `pay.yourdomain.com`) and let the certificate be issued.
-3. Run **Set Primary Domain** and pick that domain. The service restarts.
+3. Complete the **Set Primary Domain** task and pick that domain.
 4. Open the **Admin UI**, sign in with the password, and click **Add identity**. Enter the name you want before the `@`, and your Nostr public key (npub) if you want NIP-05 for that name.
 
 Your Lightning Address is now `name@yourdomain` and, with an npub set, the same text works as your NIP-05 in Nostr clients. Add as many identities as you like; each has its own address, its own zap-signing key and its own wallet service key.
@@ -45,11 +52,12 @@ Anything on a public domain gets probed by scanners looking for files such as `/
 
 **Logs.** Every Nostr event in or out is logged with its kind, id and the sender's public key: wallet requests and their outcome in the `core` log, events the relay accepted or refused (and why, and from which IP) plus every web request with its IP in the `edge` log. When a zap or a wallet app misbehaves, that is the place to look.
 
-**Rebake Credentials** restarts the service so it fetches a fresh LND credential immediately. Use it after revoking macaroons in LND or after restoring a backup onto a different node; otherwise credentials renew on their own every hour.
+**Your home IP.** This service connects out to Nostr relays on its own: the relays a zapper names (to deliver zap receipts) and any receipt or NWC relay you list on an identity. If you publish the Public interface through a tunnel such as StartTunnel to keep your home IP private, send this service's outbound traffic through that tunnel too, or those relays see your home IP. If you use the tunnel for another reason, such as a port your router cannot forward, there is nothing to change.
 
-## Documentation
+### Actions
 
-- [LUD-16 Lightning Address](https://github.com/lnurl/luds/blob/luds/16.md) — the address format wallets resolve
-- [NIP-05 Nostr verification](https://github.com/nostr-protocol/nips/blob/master/05.md) — how `name@domain` is verified in Nostr clients
-- [NIP-47 Nostr Wallet Connect](https://github.com/nostr-protocol/nips/blob/master/47.md) — the protocol your Nostr apps use to talk to this wallet service
-- [NIP-57 Lightning Zaps](https://github.com/nostr-protocol/nips/blob/master/57.md) — zap requests and receipts
+- **Set Primary Domain** — choose the domain your addresses live on; run it again if you move to another domain. The service restarts.
+- **Set Admin Password** — generate a new Admin UI password, shown once. The old one stops working.
+- **Authorize Sending** — turn sending on or off and set the per-payment and 24-hour caps (see Sending above).
+- **Rebake Credentials** — restarts the service so it fetches a fresh LND credential immediately. Use it after revoking macaroons in LND or after restoring a backup onto a different node; otherwise credentials renew on their own every hour.
+- **Upload Site** and **Remove Site** — put up, replace or take down the static website (see Getting set up).
